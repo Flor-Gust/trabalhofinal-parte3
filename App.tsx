@@ -1,68 +1,99 @@
-import React, { useState } from "react";
-import { createTheme, ThemeProvider } from "@rneui/themed";
-import { View, Text, Button, FlatList } from "react-native";
+import React, { useState } from 'react';
+import { View, Text, Button, TextInput, StyleSheet } from 'react-native';
+import { Picker } from '@react-native-picker/picker';
 
-// Defina um tema personalizado
-const theme = createTheme({
-  lightColors: {},
-  darkColors: {},
-});
+interface User {
+  id: number;
+  name: string;
+  type: 'Docente' | 'Estudante' | 'Técnico Administrativo';
+  institution: string;
+  permissions: 'Administrador' | 'Coordenador de Pesquisa';
+  email: string;
+}
 
-const data = {
-  "São Paulo": [
-    { id: "1", title: "Corinthians" },
-    { id: "2", title: "Palmeiras" },
-    { id: "3", title: "São Paulo FC" },
-  ],
-  "Rio de Janeiro": [
-    { id: "4", title: "Flamengo" },
-    { id: "5", title: "Vasco da Gama" },
-    { id: "6", title: "Fluminense" },
-  ],
-  "Minas Gerais": [
-    { id: "7", title: "Cruzeiro" },
-    { id: "8", title: "Atlético Mineiro" },
-    { id: "9", title: "América Mineiro" },
-  ],
-};
+const App = () => {
+  const [users, setUsers] = useState<User[]>([]);
+  const [form, setForm] = useState<User>({ id: 0, name: '', type: 'Docente', institution: '', permissions: 'Administrador', email: '' });
+  const [editing, setEditing] = useState(false);
 
-export default function App() {
-  const [selectedState, setSelectedState] = useState(null);
-
-  const handleStateSelection = (state: any) => {
-    setSelectedState(state);
+  const createUser = (user: User) => {
+    setUsers([...users, { ...user, id: Math.random() }]);
   };
 
-  const handleGoBack = () => {
-    setSelectedState(null);
+  const updateUser = (user: User) => {
+    setUsers(users.map(u => u.id === user.id ? user : u));
+    setEditing(false);
+    setForm({ id: 0, name: '', type: 'Docente', institution: '', permissions: 'Administrador', email: '' });
+  };
+
+  const deleteUser = (id: number) => {
+    setUsers(users.filter(user => user.id !== id));
+  };
+
+  const editUser = (user: User) => {
+    setForm(user);
+    setEditing(true);
+  };
+
+  const handleChange = (name: string, value: string) => {
+    setForm({ ...form, [name]: value });
+  };
+
+  const handleSubmit = () => {
+    if (editing) {
+      updateUser(form);
+    } else {
+      createUser(form);
+    }
+    setForm({ id: 0, name: '', type: 'Docente', institution: '', permissions: 'Administrador', email: '' });
   };
 
   return (
-    <ThemeProvider theme={theme}>
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "black" }}>
-        {selectedState ? (
-          <View style={{ marginTop: 20 }}>
-            <Text style={{ color: "white", fontSize: 20, marginBottom: 10 }}>Maiores times de {selectedState}</Text>
-            <FlatList
-              data={data[selectedState]}
-              renderItem={({ item }) => <Text style={{ color: "white" }}>{item.title}</Text>}
-              keyExtractor={(item) => item.id}
-            />
-            <Button title="Voltar" onPress={handleGoBack} />
-          </View>
-        ) : (
-          <View>
-            <Text style={{ color: "white", fontSize: 20, marginBottom: 10 }}>Maiores times do Sudeste</Text>
-            <View style={{ flexDirection: "row", marginBottom: 20 }}>
-              <Button title="São Paulo" onPress={() => handleStateSelection("São Paulo")} />
-              <View style={{ width: 10 }} />
-              <Button title="Rio de Janeiro" onPress={() => handleStateSelection("Rio de Janeiro")} />
-              <View style={{ width: 10 }} />
-              <Button title="Minas Gerais" onPress={() => handleStateSelection("Minas Gerais")} />
-            </View>
-          </View>
-        )}
-      </View>
-    </ThemeProvider>
+    <View style={styles.container}>
+      <Text>Nome</Text>
+      <TextInput style={styles.input} value={form.name} onChangeText={(value) => handleChange('name', value)} />
+      <Text>Tipo</Text>
+      <Picker style={styles.input} selectedValue={form.type} onValueChange={(value) => handleChange('type', value)}>
+        <Picker.Item label="Docente" value="Docente" />
+        <Picker.Item label="Estudante" value="Estudante" />
+        <Picker.Item label="Técnico Administrativo" value="Técnico Administrativo" />
+      </Picker>
+      <Text>Instituição</Text>
+      <TextInput style={styles.input} value={form.institution} onChangeText={(value) => handleChange('institution', value)} />
+      <Text>Permissões</Text>
+      <Picker style={styles.input} selectedValue={form.permissions} onValueChange={(value) => handleChange('permissions', value)}>
+        <Picker.Item label="Administrador" value="Administrador" />
+        <Picker.Item label="Coordenador de Pesquisa" value="Coordenador de Pesquisa" />
+      </Picker>
+      <Text>Email</Text>
+      <TextInput style={styles.input} value={form.email} onChangeText={(value) => handleChange('email', value)} />
+      <Button title={editing ? "Atualizar usuário" : "Criar usuário"} onPress={handleSubmit} />
+
+      {/* Lista de usuários */}
+      {users.map(user => (
+        <View key={user.id}>
+          <Text>{user.name}</Text>
+          <Button title="Editar" onPress={() => editUser(user)} />
+          <Button title="Excluir" onPress={() => deleteUser(user.id)} />
+        </View>
+      ))}
+    </View>
   );
-}
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    padding: 20,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#000',
+    borderRadius: 5,
+    marginBottom: 10,
+    padding: 10,
+  },
+});
+
+export default App;
